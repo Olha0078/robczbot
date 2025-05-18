@@ -1,4 +1,3 @@
-
 import os
 import asyncio
 import sqlite3
@@ -16,20 +15,23 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.storage.memory import MemoryStorage
 from dotenv import load_dotenv
 
-# Загрузка переменных окружения из файла .env с абсолютным путём
-load_dotenv(r"C:\Users\popao\OneDrive\Рабочий стол\бото\.env")
+# Загружаем .env из текущей директории, если файл есть
+if os.path.exists(".env"):
+    load_dotenv()
+else:
+    print("Warning: .env file not found, переменные окружения будут браться из системных настроек")
 
 # Получаем токен из переменных окружения
-TOKEN = os.getenv("BOT_TOKEN")  # В .env должна быть строка BOT_TOKEN=твой_токен
+TOKEN = os.getenv("BOT_TOKEN")
 
 if not TOKEN:
-    print("Ошибка: токен бота не найден. Проверьте файл .env, он должен содержать строку вида:\nBOT_TOKEN=ваш_токен_здесь")
+    print("Ошибка: токен бота не найден. Проверьте переменную окружения BOT_TOKEN.")
     exit()
 
 # Категории объявлений
 CATEGORIES = ['🏠 Аренда', '💼 Работа', '🔧 Услуги', '🛒 Куплю/Продам', '🎁 Отдам даром']
 
-# Состояния FSM
+# FSM состояния
 class AdStates(StatesGroup):
     category = State()
     title = State()
@@ -38,14 +40,10 @@ class AdStates(StatesGroup):
     photo = State()
     contact = State()
 
-# Инициализация бота и диспетчера с хранением состояний в памяти
-bot = Bot(
-    token=TOKEN,
-    default=DefaultBotProperties(parse_mode=ParseMode.HTML)
-)
+bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 dp = Dispatcher(storage=MemoryStorage())
 
-# Создание БД и курсора
+# Подключение к базе SQLite (будет создана в текущей папке)
 conn = sqlite3.connect("ads.db")
 cursor = conn.cursor()
 
@@ -70,7 +68,7 @@ cursor.execute('''CREATE TABLE IF NOT EXISTS ad_limits (
 
 conn.commit()
 
-# Основная клавиатура
+# Клавиатуры
 main_kb = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text="➕ Добавить объявление")],
@@ -79,7 +77,6 @@ main_kb = ReplyKeyboardMarkup(
     resize_keyboard=True
 )
 
-# Клавиатура категорий (инлайн)
 category_kb = InlineKeyboardMarkup(
     inline_keyboard=[[InlineKeyboardButton(text=cat, callback_data=f"cat_{cat}")] for cat in CATEGORIES]
 )
@@ -178,6 +175,7 @@ async def view_ads(message: Message):
             await message.answer(text)
 
 async def main():
+    print("Бот запускается...")
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
