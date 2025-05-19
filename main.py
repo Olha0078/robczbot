@@ -1,3 +1,4 @@
+
 import os
 import asyncio
 import sqlite3
@@ -40,6 +41,7 @@ class AdStates(StatesGroup):
     photo = State()
     contact = State()
 
+# Создаём бота с правильным способом задания parse_mode для aiogram 3.7+
 bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 dp = Dispatcher(storage=MemoryStorage())
 
